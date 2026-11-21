@@ -11,15 +11,15 @@ using VipCoreApi.Enums;
 
 namespace VIP_ExperienceMultiplier;
 
-// Next-il: our own module - the group's exp_multiplier for VIPs, plus a "Name Reward" for anyone with the server
-// name in their nickname. Ported from our 1.x build to the 2.0 module API.
+// Next-il: our own module - the group's exp_multiplier for VIPs, plus a "Name Reward" for anyone with "Next" in their
+// nickname (case-insensitive, anywhere in the name). Ported from our 1.x build to the 2.0 module API.
 public static class ConVars
 {
     public static readonly FakeConVar<float> NameRewardMultiplier =
         new("ranks_namereward_experience_multiplier", "The multiplier for player experience", 1.5f);
 
     public static readonly FakeConVar<string> NameRewardName =
-        new("ranks_namereward_name", "The string to give the bonus for", "next-il");
+        new("ranks_namereward_name", "The string to give the bonus for", "Next");
 }
 
 public class VipExperienceMultiplier : BasePlugin
