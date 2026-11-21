@@ -16,6 +16,15 @@ public class VipPlayer(CCSPlayerController controller, SteamID steamId)
     public Dictionary<string, object>? Features { get; set; }
     public bool IsTemporary { get; set; }
 
+    /// <summary>
+    /// Next-il: bumped on every VIP change in game. A database read started before a change is dropped when it comes
+    /// back, so a slow load or sync never undoes a grant or removal made meanwhile.
+    /// </summary>
+    public int Generation { get; set; }
+
+    /// <summary>Next-il: the connect-time load has finished; until then the database sync leaves the player alone.</summary>
+    public bool Loaded { get; set; }
+
     public Dictionary<string, FeatureState> FeatureStates { get; } = new();
     public Dictionary<(string Feature, Type Type), object?> FeatureValues { get; } = new();
 

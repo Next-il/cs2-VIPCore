@@ -11,7 +11,10 @@ public class VipServiceCollection : IPluginServiceCollection<Plugin>
     public void ConfigureServices(IServiceCollection serviceCollection)
     {
         var configSystem = new ConfigSystem(serviceCollection);
-        LegacyConfigMigration.Run();
+
+        // Next-il: no LegacyConfigMigration.Run() - it rewrites vip.json and vip_core.json on load, and those are one
+        // shared file per node in our Mounts repo, so a restart wave of servers would all rewrite them at once. Our
+        // configs are converted in the repo instead.
 
         configSystem
             .AddConfig<VipConfig>("vip_core")

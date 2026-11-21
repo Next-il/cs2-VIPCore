@@ -53,10 +53,8 @@ public class MenuManager
 
     public void LoadSortOrder()
     {
-        if (!File.Exists(SortMenuPath))
-            File.WriteAllLines(SortMenuPath, ["Health", "Armor"]);
-
-        _sortedItems = File.ReadAllLines(SortMenuPath);
+        // Next-il: not written when missing - a shared file on our servers, see Config.Load
+        _sortedItems = File.Exists(SortMenuPath) ? File.ReadAllLines(SortMenuPath) : ["Health", "Armor"];
     }
 
     private void OpenVipMenu(CCSPlayerController? player)

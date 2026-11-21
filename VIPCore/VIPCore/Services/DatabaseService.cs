@@ -66,6 +66,18 @@ public class DatabaseService(Plugin plugin, DatabaseProvider dbProvider, Config<
             new { AccountId = accountId, ServerId, Now });
     }
 
+    /// <summary>Next-il: the current rows of many players at once, for the online-player sync.</summary>
+    public async Task<IEnumerable<VipData>> GetUsersAsync(int[] accountIds)
+    {
+        await using var connection = await dbProvider.OpenConnectionAsync();
+        return await connection.QueryAsync<VipData>(
+            """
+            SELECT * FROM `vip_users`
+            WHERE `sid` = @ServerId AND `account_id` IN @AccountIds AND (`expires` = 0 OR `expires` > @Now)
+            """,
+            new { AccountIds = accountIds, ServerId, Now });
+    }
+
     public async Task UpsertUserAsync(VipData data)
     {
         try

@@ -32,7 +32,6 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
         DapperUtils.MapProperties<Plugin>();
 
         _cookies = serviceProvider.GetRequiredService<CookieService>();
-        _cookies.Load();
 
         var database = serviceProvider.GetRequiredService<DatabaseService>();
         _players = serviceProvider.GetRequiredService<PlayersManager>();
@@ -42,22 +41,33 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
 
         Capabilities.RegisterPluginCapability(IVipCoreApi.Capability, () => _api);
 
-        Task.Run(database.CreateTablesAsync);
+        Task.Run(async () =>
+        {
+            await database.CreateTablesAsync();
+            await _cookies.InitializeAsync();
+        });
 
         RegisterListener<Listeners.OnClientAuthorized>(_players.OnClientAuthorized);
         RegisterListener<Listeners.OnClientDisconnect>(_players.OnClientDisconnect);
-        RegisterListener<Listeners.OnMapEnd>(_cookies.Save);
+        // Next-il: cookies are written per player on disconnect; map end and shutdown write what is still pending
+        RegisterListener<Listeners.OnMapEnd>(() => _cookies.FlushAll());
         RegisterEventHandler<EventServerShutdown>((_, _) =>
         {
-            _cookies.Save();
+            _cookies.FlushAll().Wait(TimeSpan.FromSeconds(3));
             return HookResult.Continue;
         });
         RegisterEventHandler<EventPlayerSpawn>(OnPlayerSpawn);
 
         Server.NextWorldUpdate(() =>
         {
-            AddTimer(30.0f, _players.RemoveExpired, TimerFlags.REPEAT);
-            AddTimer(300.0f, () => Task.Run(database.PurgeExpiredUsersAsync), TimerFlags.REPEAT);
+            // Next-il: the sync picks up website grants, changes and removals for online players (it replaces the
+            // VipDbChecker plugin). No 300s purge of expired rows - the website's hourly job does that once,
+            // instead of every server running the same DELETE.
+            AddTimer(30.0f, () =>
+            {
+                _players.SyncWithDatabase();
+                _players.RemoveExpired();
+            }, TimerFlags.REPEAT);
 
             _players.LoadConnectedPlayers();
             _api.InvokeOnCoreReady();
@@ -66,7 +76,7 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
 
     public override void Unload(bool hotReload)
     {
-        _cookies.Save();
+        _cookies.FlushAll().Wait(TimeSpan.FromSeconds(3));
     }
 
     private HookResult OnPlayerSpawn(EventPlayerSpawn @event, GameEventInfo info)

@@ -22,17 +22,34 @@ public class Config<T> : IConfig where T : new()
         Load();
     }
 
+    // Next-il: the config is one file shared by every server on a node (Mounts bind mount). It is never written on
+    // load - a missing file runs on defaults - and a read that lands while someone edits it is retried.
     public void Load()
     {
-        if (File.Exists(_path))
+        if (!File.Exists(_path))
         {
-            Value = JsonSerializer.Deserialize<T>(File.ReadAllText(_path), ConfigSystem.ConfigJsonOptions) ??
-                    throw new JsonException($"{Name}.json cannot be deserialized");
+            Value = new T();
             return;
         }
 
-        Value = new T();
-        Save();
+        for (var attempt = 1; ; attempt++)
+        {
+            try
+            {
+                var json = File.ReadAllText(_path);
+                if (!string.IsNullOrWhiteSpace(json) || attempt == 4)
+                {
+                    Value = JsonSerializer.Deserialize<T>(json, ConfigSystem.ConfigJsonOptions) ??
+                            throw new JsonException($"{Name}.json cannot be deserialized");
+                    return;
+                }
+            }
+            catch (Exception e) when (e is JsonException or IOException && attempt < 4)
+            {
+            }
+
+            Thread.Sleep(100);
+        }
     }
 
     public void Save()

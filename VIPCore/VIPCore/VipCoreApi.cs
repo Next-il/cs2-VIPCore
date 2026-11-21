@@ -225,12 +225,9 @@ public class VipCoreApi : IVipCoreApi
     {
         var configFilePath = Path.Combine(path, $"{name}.json");
 
+        // Next-il: a missing module config runs on defaults and is not written - a shared file on our servers
         if (!File.Exists(configFilePath))
-        {
-            var defaultConfig = Activator.CreateInstance<T>();
-            File.WriteAllText(configFilePath, JsonSerializer.Serialize(defaultConfig, ConfigSystem.ConfigJsonOptions));
-            return defaultConfig;
-        }
+            return Activator.CreateInstance<T>();
 
         return JsonSerializer.Deserialize<T>(File.ReadAllText(configFilePath), ConfigSystem.ConfigJsonOptions) ??
                throw new JsonException($"File {name}.json cannot be deserialized");
