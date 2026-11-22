@@ -34,7 +34,7 @@
     flow-children: right;
     padding: 9px 14px 10px 11px;
     border-top: 2px solid #4f8fe8;
-    background-color: #0c1729eb;
+    background-color: #0c1729cc;
     world-blur: gaussian(8.0);
 
     opacity: 0;
@@ -228,22 +228,22 @@
 
 /* ------------------------------------------------------------------ group palettes */
 
-.vw.g-vip { border-top-color: #4f8fe8; background-color: #0c1729eb; }
+.vw.g-vip { border-top-color: #4f8fe8; background-color: #0c1729cc; }
 .vw.g-vip .vw-crest { wash-color: #4f8fe8; }
 .vw.g-vip .vw-eyebrow { color: #4f8fe8; }
 .vw.g-vip .vw-chip, .vw.g-vip .vw-fill { background-color: #4f8fe8; }
 
-.vw.g-premium { border-top-color: #a46cff; background-color: #160f2aeb; }
+.vw.g-premium { border-top-color: #a46cff; background-color: #160f2acc; }
 .vw.g-premium .vw-crest { wash-color: #a46cff; }
 .vw.g-premium .vw-eyebrow { color: #a46cff; }
 .vw.g-premium .vw-chip, .vw.g-premium .vw-fill { background-color: #a46cff; }
 
-.vw.g-supreme { border-top-color: #f5883a; background-color: #23150aeb; }
+.vw.g-supreme { border-top-color: #f5883a; background-color: #23150acc; }
 .vw.g-supreme .vw-crest { wash-color: #f5883a; }
 .vw.g-supreme .vw-eyebrow { color: #f5883a; }
 .vw.g-supreme .vw-chip, .vw.g-supreme .vw-fill { background-color: #f5883a; }
 
-.vw.g-none { border-top-color: #8b939c; background-color: #0e1217eb; }
+.vw.g-none { border-top-color: #8b939c; background-color: #0e1217cc; }
 .vw.g-none .vw-crest { wash-color: #8b939c; }
 .vw.g-none .vw-eyebrow { color: #8b939c; }
 .vw.g-none .vw-chip, .vw.g-none .vw-fill { background-color: #8b939c; }
@@ -255,7 +255,7 @@
 .vw.soon .vw-time .vw-left { color: #ff8270; }
 
 /* Ran out or removed: grey whatever the group, no perks and no time */
-.vw.st-gone.g-vip, .vw.st-gone.g-premium, .vw.st-gone.g-supreme, .vw.st-gone.g-none { border-top-color: #6c747d; background-color: #0e1217eb; }
+.vw.st-gone.g-vip, .vw.st-gone.g-premium, .vw.st-gone.g-supreme, .vw.st-gone.g-none { border-top-color: #6c747d; background-color: #0e1217cc; }
 .vw.st-gone .vw-main .vw-top .vw-eyebrow { color: #6c747d; }
 .vw.st-gone .vw-main .vw-top .vw-chip { background-color: #6c747d; }
 .vw.st-gone.g-vip .vw-crest, .vw.st-gone.g-premium .vw-crest, .vw.st-gone.g-supreme .vw-crest, .vw.st-gone.g-none .vw-crest { wash-color: #6c747d; }
