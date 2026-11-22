@@ -163,6 +163,27 @@ public abstract class VipFeature : IDisposable
     }
 
     /// <summary>
+    /// Next-il: the choices this feature offers in the !vip HUD menu, one button each in the feature's row - the
+    /// FOV values, for example. Null (the default) means none: a <see cref="FeatureType.Toggle"/> feature then gets
+    /// ON/OFF from the core, and a <see cref="FeatureType.Selectable"/> one a button that opens its own menu through
+    /// <see cref="OnSelectItem"/>, as the old menu did.
+    /// </summary>
+    /// <param name="player">The player the menu is drawn for.</param>
+    /// <returns>The choices, or <c>null</c> for none.</returns>
+    public virtual IReadOnlyList<FeatureOption>? GetMenuOptions(CCSPlayerController player) => null;
+
+    /// <summary>
+    /// Next-il: the player clicked one of <see cref="GetMenuOptions"/> in the !vip HUD menu. The core only passes
+    /// a value that was offered unlocked, but the click comes from a client: check it again. Apply it silently - the
+    /// menu redraws with the new selection, so a chat line would only repeat it.
+    /// </summary>
+    /// <param name="player">The player who clicked.</param>
+    /// <param name="value">The <see cref="FeatureOption.Value"/> of the clicked choice.</param>
+    public virtual void OnMenuOptionSelected(CCSPlayerController player, string value)
+    {
+    }
+
+    /// <summary>
     /// Retrieves the translated text for the specified key with optional formatting arguments for the given player.
     /// </summary>
     /// <param name="player">The player for whom the translation is requested.</param>

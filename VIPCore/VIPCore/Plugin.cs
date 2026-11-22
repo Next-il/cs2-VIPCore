@@ -7,6 +7,7 @@ using CounterStrikeSharp.API.Modules.Timers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VIPCore.Configs;
+using VIPCore.Hud;
 using VIPCore.Player;
 using VIPCore.Services;
 using VipCoreApi;
@@ -26,6 +27,7 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
     private PlayersManager _players = null!;
     private CookieService _cookies = null!;
     private MenuManager _menuManager = null!;
+    private VipHud _hud = null!;
 
     public override void Load(bool hotReload)
     {
@@ -36,6 +38,12 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
         var database = serviceProvider.GetRequiredService<DatabaseService>();
         _players = serviceProvider.GetRequiredService<PlayersManager>();
         _api = serviceProvider.GetRequiredService<VipCoreApi>();
+
+        // Next-il: the welcome/status card and the !vip mouse menu. Off (Hud.Enabled = false) or failing to spawn,
+        // every message falls back to its chat line and !vip to the old center menu.
+        _hud = serviceProvider.GetRequiredService<VipHud>();
+        _hud.Init();
+
         _menuManager = serviceProvider.GetRequiredService<MenuManager>();
         RegisterAllAttributes(serviceProvider.GetRequiredService<CommandsService>());
 
@@ -48,6 +56,7 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
         });
 
         RegisterListener<Listeners.OnClientAuthorized>(_players.OnClientAuthorized);
+        RegisterListener<Listeners.OnClientDisconnect>(_hud.OnClientDisconnect);
         RegisterListener<Listeners.OnClientDisconnect>(_players.OnClientDisconnect);
         // Next-il: cookies are written per player on disconnect; map end and shutdown write what is still pending
         RegisterListener<Listeners.OnMapEnd>(() => _cookies.FlushAll());
@@ -76,6 +85,7 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
 
     public override void Unload(bool hotReload)
     {
+        _hud?.Dispose();
         _cookies.FlushAll().Wait(TimeSpan.FromSeconds(3));
     }
 
@@ -83,6 +93,8 @@ public class Plugin(IServiceProvider serviceProvider, Config<VipConfig> coreConf
     {
         var player = @event.Userid;
         if (player is null || !player.IsValid || player.IsBot) return HookResult.Continue;
+
+        _hud.OnPlayerSpawn(player);
 
         AddTimer(coreConfig.Value.Delay, () =>
         {

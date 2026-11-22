@@ -12,6 +12,9 @@ namespace VIP_Tags;
 /// Next-il: our own module. A VIP group's "ScoreboardTag" (plain clan tag) and "ChatTag" ({Color} syntax) from
 /// vip.json, applied to every player of that group - players never pick them. Ported from our 1.x build
 /// (Next-il/Plugins/VIPTags) to the 2.0 module API. Not upstream's VIP_Tag, which lets players type their own.
+///
+/// <para>A group with "Tags": true can switch both tags off and on again: a "Tags" toggle in !vip (TAG ON/OFF in the
+/// HUD menu), saved like every other toggle. A group without the key always wears its tags, as before.</para>
 /// </summary>
 public class VipTags : BasePlugin
 {
@@ -22,6 +25,7 @@ public class VipTags : BasePlugin
     private IVipCoreApi? _api;
     private TagFeature? _scoreboardTag;
     private TagFeature? _chatTag;
+    private TagToggle? _toggle;
 
     // Per player, the tags of their current group
     private readonly Dictionary<ulong, TagData> _playerTags = [];
@@ -42,6 +46,7 @@ public class VipTags : BasePlugin
         // Hide: tags come from the group config, not from a menu choice
         _scoreboardTag = new TagFeature("ScoreboardTag", _api, this);
         _chatTag = new TagFeature("ChatTag", _api, this);
+        _toggle = new TagToggle(_api, this);
 
         if (!hotReload) return;
 
@@ -53,13 +58,15 @@ public class VipTags : BasePlugin
     {
         _scoreboardTag?.Dispose();
         _chatTag?.Dispose();
+        _toggle?.Dispose();
     }
 
     internal void Cache(CCSPlayerController player)
     {
         var data = new TagData(ReadGroupTag(player, "ScoreboardTag"), ReadGroupTag(player, "ChatTag"));
         _playerTags[player.SteamID] = data;
-        ApplyScoreboardTag(player, data.ScoreboardTag);
+        if (TagsOn(player))
+            ApplyScoreboardTag(player, data.ScoreboardTag);
     }
 
     internal void Forget(CCSPlayerController player)
@@ -73,9 +80,29 @@ public class VipTags : BasePlugin
 
     internal void ApplyStored(CCSPlayerController player)
     {
-        if (_playerTags.TryGetValue(player.SteamID, out var data))
+        if (_playerTags.TryGetValue(player.SteamID, out var data) && TagsOn(player))
             ApplyScoreboardTag(player, data.ScoreboardTag);
     }
+
+    /// <summary>The Tags toggle was flipped: put the clan tag back on, or take it off. The chat tag follows by itself.</summary>
+    internal void ToggleChanged(CCSPlayerController player)
+    {
+        if (!_playerTags.TryGetValue(player.SteamID, out var data) || data.ScoreboardTag is null || !player.IsValid) return;
+
+        if (TagsOn(player))
+        {
+            ApplyScoreboardTag(player, data.ScoreboardTag);
+            return;
+        }
+
+        player.Clan = "";
+        Utilities.SetStateChanged(player, "CCSPlayerController", "m_szClan");
+    }
+
+    /// <summary>On unless the player's group has the "Tags" toggle and the player switched it off.</summary>
+    private bool TagsOn(CCSPlayerController player) =>
+        _api == null || _toggle == null || !_api.PlayerHasFeature(player, TagToggle.Key) ||
+        _api.GetPlayerFeatureState(player, TagToggle.Key) is FeatureState.Enabled;
 
     private string? ReadGroupTag(CCSPlayerController player, string feature)
     {
@@ -110,8 +137,9 @@ public class VipTags : BasePlugin
 
         if (_api?.IsPlayerVip(player) != true) return HookResult.Continue;
 
-        // Only when the player's group defines a chat tag
-        if (!_playerTags.TryGetValue(player.SteamID, out var data) || string.IsNullOrEmpty(data.ChatTag))
+        // Only when the player's group defines a chat tag and the player has not switched tags off
+        if (!_playerTags.TryGetValue(player.SteamID, out var data) || string.IsNullOrEmpty(data.ChatTag) ||
+            !TagsOn(player))
             return HookResult.Continue;
 
         var tag = ReplaceColors(data.ChatTag, player.Team);
@@ -187,4 +215,15 @@ public class TagFeature(string name, IVipCoreApi api, VipTags plugin) : VipFeatu
     {
         if (Handles && vip) plugin.ApplyStored(player);
     }
+}
+
+/// <summary>
+/// "Tags": true in a group makes its tags switchable - a toggle the core lists in !vip and saves per player. Flipping it
+/// takes the clan tag off or puts it back; the chat tag checks it on every message.
+/// </summary>
+public class TagToggle(IVipCoreApi api, VipTags plugin) : VipFeature<bool>(Key, api)
+{
+    public const string Key = "Tags";
+
+    public override void OnSelectItem(CCSPlayerController player, VipFeature feature) => plugin.ToggleChanged(player);
 }

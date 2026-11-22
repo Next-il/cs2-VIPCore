@@ -27,6 +27,27 @@ public class PlayersManager
     public event Action<VipPlayer, string>? PlayerRemoved;
     public event Action<VipPlayer>? PlayerDisconnect;
 
+    /// <summary>
+    /// Next-il: the HUD (Hud/VipHud.cs). Gets every status change first; true means it showed it on the card, false
+    /// or no handler means the old chat line is printed instead - which is all of them when Hud.Enabled is false.
+    /// </summary>
+    public Func<VipNotice, bool>? NoticeHandler { get; set; }
+
+    private bool Notify(VipNotice notice)
+    {
+        if (NoticeHandler is not { } handler) return false;
+
+        try
+        {
+            return handler(notice);
+        }
+        catch (Exception e)
+        {
+            _plugin.Logger.LogError("VIP HUD failed on {kind}, using chat instead: {e}", notice.Kind, e);
+            return false;
+        }
+    }
+
     public PlayersManager(
         Plugin plugin,
         DatabaseService database,
@@ -153,6 +174,8 @@ public class PlayersManager
                 {
                     if (!player.IsTemporary)
                         Remove(player);
+                    if (!player.IsVip)
+                        Notify(new VipNotice(player, NoticeKind.NotVip, ""));
                     return;
                 }
 
@@ -161,7 +184,10 @@ public class PlayersManager
                     data.Name = player.Controller.PlayerName;
 
                 SetVip(player, data, isTemporary: false);
-                PrintWelcomeWhenConnected(player);
+
+                // Next-il: the HUD shows it once per visit at first spawn; the chat line goes out on every map change
+                if (!Notify(new VipNotice(player, NoticeKind.Welcome, data.Group)))
+                    PrintWelcomeWhenConnected(player);
             });
         }
         catch (Exception e)
@@ -193,7 +219,7 @@ public class PlayersManager
         PlayerRemoved?.Invoke(player, group);
         player.Clear();
 
-        if (notify)
+        if (notify && !Notify(new VipNotice(player, NoticeKind.Removed, group)))
             _plugin.PrintToChat(player.Controller, _plugin.Translate(player.Controller, "vip.Removed", group));
 
         return true;
@@ -217,7 +243,8 @@ public class PlayersManager
 
             Remove(player);
 
-            _plugin.PrintToChat(player.Controller, _plugin.Translate(player.Controller, "vip.Expired", data.Group));
+            if (!Notify(new VipNotice(player, NoticeKind.Expired, data.Group)))
+                _plugin.PrintToChat(player.Controller, _plugin.Translate(player.Controller, "vip.Expired", data.Group));
             _plugin.LogInfo("User '{name} [{accountId}]' has been removed due to expired VIP status.", data.Name,
                 data.AccountId);
 
@@ -298,7 +325,8 @@ public class PlayersManager
             _plugin.LogInfo("'{name} [{accountId}]' got {group} in the database - applying it in game",
                 controller.PlayerName, row.AccountId, row.Group);
             SetVip(player, row, isTemporary: false);
-            PrintWelcome(player);
+            if (!Notify(new VipNotice(player, NoticeKind.Activated, row.Group)))
+                PrintWelcome(player);
             return;
         }
 
@@ -311,9 +339,12 @@ public class PlayersManager
             if (string.IsNullOrEmpty(row.Name))
                 row.Name = data.Name;
 
-            PlayerRemoved?.Invoke(player, data.Group);
+            var oldGroup = data.Group;
+            var oldExpires = data.Expires;
+            PlayerRemoved?.Invoke(player, oldGroup);
             SetVip(player, row, isTemporary: false);
-            _plugin.PrintToChat(controller, _plugin.Translate(controller, "vip.GroupChanged", row.Group));
+            if (!Notify(new VipNotice(player, NoticeKind.GroupChanged, row.Group, oldGroup, oldExpires)))
+                _plugin.PrintToChat(controller, _plugin.Translate(controller, "vip.GroupChanged", row.Group));
             return;
         }
 
@@ -321,10 +352,12 @@ public class PlayersManager
         {
             _plugin.LogInfo("VIP expiry of '{name} [{accountId}]' changed in the database: {old} -> {expires}",
                 data.Name, data.AccountId, data.Expires, row.Expires);
+            var oldExpires = data.Expires;
             data.Expires = row.Expires;
             player.Generation++;
-            _plugin.PrintToChat(controller,
-                $"{_plugin.Translate(controller, "vip.TimeChanged")} {ExpiresText(controller, data.Expires)}");
+            if (!Notify(new VipNotice(player, NoticeKind.TimeChanged, data.Group, null, oldExpires)))
+                _plugin.PrintToChat(controller,
+                    $"{_plugin.Translate(controller, "vip.TimeChanged")} {ExpiresText(controller, data.Expires)}");
         }
     }
 
@@ -339,7 +372,7 @@ public class PlayersManager
 
         SetVip(player, data, isTemporary);
 
-        if (notify)
+        if (notify && !Notify(new VipNotice(player, NoticeKind.Activated, data.Group)))
             PrintWelcome(player);
     }
 
@@ -351,26 +384,41 @@ public class PlayersManager
             if (name != null)
                 data.Name = name;
 
+            var oldExpires = data.Expires;
+            string? oldGroup = null;
+
             if (group != null && group != data.Group)
             {
                 // Next-il: modules hear that the old group is gone (VIP_Flags takes its flags back) before the
                 // new one loads - upstream only fired the load.
+                oldGroup = data.Group;
                 PlayerRemoved?.Invoke(player, data.Group);
                 data.Group = group;
                 SetVip(player, data, player.IsTemporary);
-
-                if (notify)
-                    _plugin.PrintToChat(controller, _plugin.Translate(controller, "vip.GroupChanged", group));
             }
 
             if (expires != null)
             {
                 data.Expires = expires.Value;
                 player.Generation++;
+            }
 
-                if (notify)
-                    _plugin.PrintToChat(controller,
-                        $"{_plugin.Translate(controller, "vip.TimeChanged")} {ExpiresText(controller, data.Expires)}");
+            // Next-il: one card for both changes (the upgrade card shows the new days left too); the chat
+            // fallback keeps its two lines
+            if (notify)
+            {
+                var shown = oldGroup != null
+                    ? Notify(new VipNotice(player, NoticeKind.GroupChanged, data.Group, oldGroup, oldExpires))
+                    : expires != null && Notify(new VipNotice(player, NoticeKind.TimeChanged, data.Group, null, oldExpires));
+
+                if (!shown)
+                {
+                    if (oldGroup != null)
+                        _plugin.PrintToChat(controller, _plugin.Translate(controller, "vip.GroupChanged", data.Group));
+                    if (expires != null)
+                        _plugin.PrintToChat(controller,
+                            $"{_plugin.Translate(controller, "vip.TimeChanged")} {ExpiresText(controller, data.Expires)}");
+                }
             }
 
             if (player.IsTemporary) return;

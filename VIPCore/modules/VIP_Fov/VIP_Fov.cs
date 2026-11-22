@@ -90,6 +90,36 @@ public class Fov : VipFeature<List<int>>
         menu.Open(player);
     }
 
+    // Next-il: the !vip HUD menu's FOV row - OFF (90), then every value any group has, the ones above the player's
+    // own group locked as a hint of what the next group gets. Picking one does what the old submenu did, minus the
+    // "You have set FOV to 90" line: the row shows the choice.
+    public override IReadOnlyList<FeatureOption>? GetMenuOptions(CCSPlayerController player)
+    {
+        var own = GetValue(player) ?? [];
+        var current = _fovSettings[player.Slot];
+
+        var values = GetVipGroups()
+            .SelectMany(group => Api.GetGroupFeatureValue<List<int>>(group, Name) ?? [])
+            .Concat(own)
+            .Where(fov => fov is > 0 and not 90)
+            .Distinct()
+            .Order();
+
+        var options = new List<FeatureOption> { new("90", GetTranslatedText(player, "menu.Disabled"), current == 90) };
+        options.AddRange(values.Select(fov =>
+            new FeatureOption(fov.ToString(), fov.ToString(), current == fov, !own.Contains(fov))));
+        return options;
+    }
+
+    public override void OnMenuOptionSelected(CCSPlayerController player, string value)
+    {
+        if (!int.TryParse(value, out var fov)) return;
+        if (fov != 90 && GetValue(player)?.Contains(fov) != true) return;
+
+        _fovSettings[player.Slot] = fov;
+        ChangeFov(player);
+    }
+
     private void ChangeFov(CCSPlayerController player, bool saveCookie = true)
     {
         var fov = (uint)_fovSettings[player.Slot];

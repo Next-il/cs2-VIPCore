@@ -10,10 +10,22 @@
     <PackageReference Include="CounterStrikeSharp.API" Version="1.0.376" />
     <PackageReference Include="Dapper" Version="2.1.21" />
     <PackageReference Include="MySqlConnector" Version="2.3.0" />
+    <!-- Next-il: the VIP HUD (Hud/). Copied next to the plugin by CopyPanoramaManager below: each
+         CounterStrikeSharp plugin loads from its own folder. Same version as our other HUD plugins. -->
+    <PackageReference Include="PanoramaManager" Version="0.4.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\VipCoreApi\VipCoreApi.csproj" />
   </ItemGroup>
+
+  <!-- A class library does not copy package dlls on build, and turning CopyLocalLockFileAssemblies on would
+       copy CounterStrikeSharp.API's whole tree. This copies PanoramaManager only. -->
+  <Target Name="CopyPanoramaManager" AfterTargets="ResolveLockFileCopyLocalFiles">
+    <ItemGroup>
+      <ReferenceCopyLocalPaths Include="@(RuntimeCopyLocalItems)"
+                               Condition="'%(RuntimeCopyLocalItems.NuGetPackageId)' == 'PanoramaManager'" />
+    </ItemGroup>
+  </Target>
 
 </Project>

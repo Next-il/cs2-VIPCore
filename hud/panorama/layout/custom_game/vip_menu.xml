@@ -1,0 +1,240 @@
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/custom_game/hud_shared.vcss_c" />
+		<include src="s2r://panorama/styles/custom_game/vip_menu.vcss_c" />
+	</styles>
+
+	<!--
+		!vip - the VIP mouse menu. Driven by VIPCore/Hud/VipMenu.cs. The first of our layouts that takes input
+		through PanoramaManager's click channel; the shape follows the /rank menu (Ranks/ranks_menu.xml).
+
+		Replaces the "VIP Menu" center menu, "You have set FOV to 90" and, for players without VIP,
+		"You don't have access to this command!" - they get the group comparison instead.
+
+		CONTRACT (VipMenu.cs must match)
+		  RootPanelId = "VipMenuRoot"   RevealClass = "show"   CloseButtonId = "vm_close"   RowCount = 0
+		  CaptureInput = true           HideHud = None         SharedText = false
+
+		The root is the full screen (a light dim while open); the card sits in the middle.
+
+		POOLS (generous on purpose: the plugin fills them from whatever VIP modules are loaded, and a bigger
+		pool later means a new workshop upload)
+		  vm_r0..vm_r5          settings rows, each with 8 option buttons or one "go" button
+		  vm_t0..vm_t3          perk tiles
+		  vc_r0..vc_r7          comparison rows, vc_h0..vc_h3 group columns
+
+		BUTTONS (PanelAction.Button, by id)
+		  vm_close                     close (the library handles it)
+		  vm_rN_oM                     option M of row N (FOV 60, TAG ON, ...)
+		  vm_rN_go                     a "go" row: another plugin's menu (!music, !sky) or a module's own menu
+
+		DIALOG VARIABLES
+		  vm_tag vm_gname vm_until_a vm_until_b vm_until_c
+		  vm_tN_k vm_tN_v                    tile label, value
+		  vm_rN_k vm_rN_oM_t vm_rN_go_t      row label, option text, go text
+		  vc_intro vc_cta vc_hN vc_rN_k vc_rN_cM
+
+		CLASSES THE SERVER TOGGLES
+		  vm                 g-vip g-premium g-supreme g-none | perm | soon
+		  vm_member, vm_compare                 hidden (one page or the other)
+		  vm_fill            p0 .. p20          (5% a step, a clip)
+		  vm_tN              hidden, off
+		  vm_rN              hidden, kind-go
+		  vm_rN_oM           hidden, sel, locked
+		  vc_hN              hidden, g-vip g-premium g-supreme g-none
+		  vc_rN              hidden
+		  vc_rN_cM           hidden, no
+	-->
+	<Panel class="hud-screen" hittest="false">
+		<Panel id="VipMenuRoot" class="vm-root" hittest="false">
+			<Panel id="vm" class="vm g-vip">
+				<Panel class="vm-head" hittest="false">
+					<Label class="vm-title" text="VIP" />
+					<Label class="vm-tag" text="{s:vm_tag}" />
+					<Panel class="fill" hittest="false" />
+					<Button id="vm_close" class="vm-x"><Label class="vm-x-lbl" text="&#x2715;" /></Button>
+				</Panel>
+				<Panel class="vm-body" hittest="false">
+					<Panel id="vm_member" class="vm-page" hittest="false">
+						<Panel class="vm-status" hittest="false">
+							<Panel class="vm-crest" hittest="false" />
+							<Panel class="vm-status-main" hittest="false">
+								<Label class="vm-gname" text="{s:vm_gname}" />
+								<Panel class="vm-until" hittest="false">
+									<Label class="vm-until-a" text="{s:vm_until_a}" />
+									<Label class="vm-until-b" text="{s:vm_until_b}" />
+									<Label class="vm-until-c" text="{s:vm_until_c}" />
+								</Panel>
+								<Panel class="vm-track" hittest="false"><Panel id="vm_fill" class="vm-fill p0" hittest="false" /></Panel>
+							</Panel>
+						</Panel>
+						<Panel class="vm-perks" hittest="false">
+							<Panel id="vm_t0" class="vm-perk" hittest="false"><Label class="vm-perk-k" text="{s:vm_t0_k}" /><Label class="vm-perk-v" text="{s:vm_t0_v}" /></Panel>
+							<Panel id="vm_t1" class="vm-perk" hittest="false"><Label class="vm-perk-k" text="{s:vm_t1_k}" /><Label class="vm-perk-v" text="{s:vm_t1_v}" /></Panel>
+							<Panel id="vm_t2" class="vm-perk" hittest="false"><Label class="vm-perk-k" text="{s:vm_t2_k}" /><Label class="vm-perk-v" text="{s:vm_t2_v}" /></Panel>
+							<Panel id="vm_t3" class="vm-perk" hittest="false"><Label class="vm-perk-k" text="{s:vm_t3_k}" /><Label class="vm-perk-v" text="{s:vm_t3_v}" /></Panel>
+						</Panel>
+						<Panel class="vm-set" hittest="false">
+							<Panel id="vm_r0" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r0_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r0_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r0_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r0_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r0_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r0_go_t}" /></Button>
+							</Panel>
+							<Panel id="vm_r1" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r1_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r1_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r1_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r1_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r1_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r1_go_t}" /></Button>
+							</Panel>
+							<Panel id="vm_r2" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r2_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r2_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r2_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r2_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r2_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r2_go_t}" /></Button>
+							</Panel>
+							<Panel id="vm_r3" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r3_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r3_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r3_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r3_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r3_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r3_go_t}" /></Button>
+							</Panel>
+							<Panel id="vm_r4" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r4_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r4_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r4_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r4_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r4_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r4_go_t}" /></Button>
+							</Panel>
+							<Panel id="vm_r5" class="vm-row hidden" hittest="false">
+								<Label class="vm-k" text="{s:vm_r5_k}" />
+								<Panel class="vm-opts" hittest="false">
+									<Button id="vm_r5_o0" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o0_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o1" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o1_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o2" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o2_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o3" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o3_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o4" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o4_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o5" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o5_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o6" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o6_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+									<Button id="vm_r5_o7" class="vm-opt hidden"><Label class="vm-opt-lbl" text="{s:vm_r5_o7_t}" /><Panel class="vm-lock" hittest="false" /></Button>
+								</Panel>
+								<Button id="vm_r5_go" class="vm-go"><Label class="vm-go-lbl" text="{s:vm_r5_go_t}" /></Button>
+							</Panel>
+						</Panel>
+					</Panel>
+					<Panel id="vm_compare" class="vm-page hidden" hittest="false">
+						<Label class="vc-intro" text="{s:vc_intro}" />
+						<Panel class="vc-table" hittest="false">
+							<Panel class="vc-row vc-head" hittest="false">
+								<Panel class="vc-k" hittest="false" />
+								<Label id="vc_h0" class="vc-h g-vip" text="{s:vc_h0}" />
+								<Label id="vc_h1" class="vc-h g-vip" text="{s:vc_h1}" />
+								<Label id="vc_h2" class="vc-h g-vip" text="{s:vc_h2}" />
+								<Label id="vc_h3" class="vc-h g-vip" text="{s:vc_h3}" />
+							</Panel>
+							<Panel id="vc_r0" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r0_k}" />
+								<Label id="vc_r0_c0" class="vc-c" text="{s:vc_r0_c0}" />
+								<Label id="vc_r0_c1" class="vc-c" text="{s:vc_r0_c1}" />
+								<Label id="vc_r0_c2" class="vc-c" text="{s:vc_r0_c2}" />
+								<Label id="vc_r0_c3" class="vc-c" text="{s:vc_r0_c3}" />
+							</Panel>
+							<Panel id="vc_r1" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r1_k}" />
+								<Label id="vc_r1_c0" class="vc-c" text="{s:vc_r1_c0}" />
+								<Label id="vc_r1_c1" class="vc-c" text="{s:vc_r1_c1}" />
+								<Label id="vc_r1_c2" class="vc-c" text="{s:vc_r1_c2}" />
+								<Label id="vc_r1_c3" class="vc-c" text="{s:vc_r1_c3}" />
+							</Panel>
+							<Panel id="vc_r2" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r2_k}" />
+								<Label id="vc_r2_c0" class="vc-c" text="{s:vc_r2_c0}" />
+								<Label id="vc_r2_c1" class="vc-c" text="{s:vc_r2_c1}" />
+								<Label id="vc_r2_c2" class="vc-c" text="{s:vc_r2_c2}" />
+								<Label id="vc_r2_c3" class="vc-c" text="{s:vc_r2_c3}" />
+							</Panel>
+							<Panel id="vc_r3" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r3_k}" />
+								<Label id="vc_r3_c0" class="vc-c" text="{s:vc_r3_c0}" />
+								<Label id="vc_r3_c1" class="vc-c" text="{s:vc_r3_c1}" />
+								<Label id="vc_r3_c2" class="vc-c" text="{s:vc_r3_c2}" />
+								<Label id="vc_r3_c3" class="vc-c" text="{s:vc_r3_c3}" />
+							</Panel>
+							<Panel id="vc_r4" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r4_k}" />
+								<Label id="vc_r4_c0" class="vc-c" text="{s:vc_r4_c0}" />
+								<Label id="vc_r4_c1" class="vc-c" text="{s:vc_r4_c1}" />
+								<Label id="vc_r4_c2" class="vc-c" text="{s:vc_r4_c2}" />
+								<Label id="vc_r4_c3" class="vc-c" text="{s:vc_r4_c3}" />
+							</Panel>
+							<Panel id="vc_r5" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r5_k}" />
+								<Label id="vc_r5_c0" class="vc-c" text="{s:vc_r5_c0}" />
+								<Label id="vc_r5_c1" class="vc-c" text="{s:vc_r5_c1}" />
+								<Label id="vc_r5_c2" class="vc-c" text="{s:vc_r5_c2}" />
+								<Label id="vc_r5_c3" class="vc-c" text="{s:vc_r5_c3}" />
+							</Panel>
+							<Panel id="vc_r6" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r6_k}" />
+								<Label id="vc_r6_c0" class="vc-c" text="{s:vc_r6_c0}" />
+								<Label id="vc_r6_c1" class="vc-c" text="{s:vc_r6_c1}" />
+								<Label id="vc_r6_c2" class="vc-c" text="{s:vc_r6_c2}" />
+								<Label id="vc_r6_c3" class="vc-c" text="{s:vc_r6_c3}" />
+							</Panel>
+							<Panel id="vc_r7" class="vc-row hidden" hittest="false">
+								<Label class="vc-k" text="{s:vc_r7_k}" />
+								<Label id="vc_r7_c0" class="vc-c" text="{s:vc_r7_c0}" />
+								<Label id="vc_r7_c1" class="vc-c" text="{s:vc_r7_c1}" />
+								<Label id="vc_r7_c2" class="vc-c" text="{s:vc_r7_c2}" />
+								<Label id="vc_r7_c3" class="vc-c" text="{s:vc_r7_c3}" />
+							</Panel>
+						</Panel>
+						<Panel class="vc-cta" hittest="false">
+							<Panel class="vc-cta-icon" hittest="false" />
+							<Label class="vc-cta-lbl" text="{s:vc_cta}" />
+						</Panel>
+					</Panel>
+				</Panel>
+			</Panel>
+		</Panel>
+	</Panel>
+</root>

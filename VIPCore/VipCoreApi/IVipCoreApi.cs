@@ -82,6 +82,16 @@ public interface IVipCoreApi
     T? GetFeatureValue<T>(CCSPlayerController player, string feature);
 
     /// <summary>
+    /// Next-il: a feature's value in a VIP group from vip.json ($inherit resolved), whoever is in it - for showing
+    /// what another group gets, like the FOV values above the player's own group in the !vip menu.
+    /// </summary>
+    /// <typeparam name="T">The expected type of the feature value.</typeparam>
+    /// <param name="group">The group name, as in vip.json.</param>
+    /// <param name="feature">The name of the feature.</param>
+    /// <returns>The value, or <c>default</c> when the group or the key does not exist.</returns>
+    T? GetGroupFeatureValue<T>(string group, string feature) => default;
+
+    /// <summary>
     /// Gets the VIP group of the specified player.
     /// </summary>
     /// <param name="player">The player whose VIP group is requested.</param>

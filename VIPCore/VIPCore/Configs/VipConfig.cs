@@ -15,6 +15,9 @@ public class VipConfig
     public string[] DisableOnPistolRound { get; init; } = ["Items", "Grenades"];
     public bool VipLogging { get; init; } = true;
 
+    /// <summary>Next-il: the welcome/status card and the !vip mouse menu.</summary>
+    public HudConfig Hud { get; init; } = new();
+
     public VipConnection Connection { get; init; } = new()
     {
         Host = "HOST",

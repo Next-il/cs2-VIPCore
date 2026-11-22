@@ -123,6 +123,28 @@ public class VipCoreApi : IVipCoreApi
         }
     }
 
+    public T? GetGroupFeatureValue<T>(string group, string feature)
+    {
+        try
+        {
+            if (_groupsConfig.Value.ResolveGroup(group) is not { } features ||
+                !features.TryGetValue(feature, out var raw))
+                return default;
+
+            if (raw is T typed) return typed;
+
+            return raw is JsonElement element
+                ? element.Deserialize<T>(ConfigSystem.ConfigJsonOptions)
+                : JsonSerializer.Deserialize<T>(JsonSerializer.Serialize(raw), ConfigSystem.ConfigJsonOptions);
+        }
+        catch (Exception e)
+        {
+            _plugin.Logger.LogError("Failed to read feature '{feature}' of group '{group}' as {type}: {error}",
+                feature, group, typeof(T).Name, e.Message);
+            return default;
+        }
+    }
+
     public string GetPlayerVipGroup(CCSPlayerController player)
     {
         return _players.TryGetPlayer(player, out var vipPlayer) && vipPlayer.IsVip ? vipPlayer.Group : string.Empty;

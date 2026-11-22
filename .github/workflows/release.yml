@@ -63,7 +63,8 @@ jobs:
         run: |
           set -e
           mkdir -p out/VIPCore out/VipCoreApi
-          cp build/VIPCore/{VIPCore.dll,VIPCore.deps.json,VIPCore.pdb,Dapper.dll,MySqlConnector.dll} out/VIPCore/
+          # PanoramaManager: the VIP HUD library loads from the plugin's own folder
+          cp build/VIPCore/{VIPCore.dll,VIPCore.deps.json,VIPCore.pdb,Dapper.dll,MySqlConnector.dll,PanoramaManager.dll} out/VIPCore/
           cp -r VIPCore/VIPCore/lang out/VIPCore/lang
           cp build/VipCoreApi/{VipCoreApi.dll,VipCoreApi.deps.json,VipCoreApi.pdb} out/VipCoreApi/
           for m in $MODULES; do
@@ -76,6 +77,7 @@ jobs:
           set -e
           test -f out/VIPCore/VIPCore.dll
           test -f out/VIPCore/lang/en.json
+          test -f out/VIPCore/PanoramaManager.dll
           test -f out/VipCoreApi/VipCoreApi.dll
           for m in $MODULES; do test -f "out/$m/$m.dll"; done
           if find out -name 'CounterStrikeSharp.API.dll' | grep -q . || find out -name 'VipCoreApi.dll' -not -path 'out/VipCoreApi/*' | grep -q .; then

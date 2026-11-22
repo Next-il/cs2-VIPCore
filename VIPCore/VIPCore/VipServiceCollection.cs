@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.DependencyInjection;
 using VIPCore.Configs;
+using VIPCore.Hud;
 using VIPCore.Player;
 using VIPCore.Services;
 
@@ -26,6 +27,7 @@ public class VipServiceCollection : IPluginServiceCollection<Plugin>
         serviceCollection.AddSingleton<DatabaseService>();
         serviceCollection.AddSingleton<PlayersManager>();
         serviceCollection.AddSingleton<VipCoreApi>();
+        serviceCollection.AddSingleton<VipHud>();
         serviceCollection.AddSingleton<MenuManager>();
         serviceCollection.AddSingleton<CommandsService>();
     }

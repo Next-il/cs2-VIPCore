@@ -13,6 +13,8 @@ VIPCore/addons/
 VIPCoreForModularityPlugin/
 *.user
 *.xml
+# Next-il: the VIP HUD's Panorama layouts are XML and belong in the repo
+!hud/panorama/layout/**/*.xml
 *.editorconfig
 
 VIPCore/modules/VIP_Hook/Vectors.cs

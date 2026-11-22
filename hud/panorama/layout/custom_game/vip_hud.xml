@@ -1,0 +1,64 @@
+<root>
+	<styles>
+		<include src="s2r://panorama/styles/custom_game/hud_shared.vcss_c" />
+		<include src="s2r://panorama/styles/custom_game/vip_hud.vcss_c" />
+	</styles>
+
+	<!--
+		VIP welcome / status card - bottom center, 132px up, 7 seconds. Driven by VIPCore/Hud/StatusCard.cs.
+
+		Replaces the chat lines: "Hello, X! You are a VIP player. Your SUPREME status expires ...",
+		group changed, time changed, expired and removed.
+
+		NOT INTERACTIVE. hittest false everywhere; the plugin opens it with CaptureInput = false.
+
+		CONTRACT (StatusCard.cs must match)
+		  RootPanelId  = "VipHudRoot"   RevealClass = "show"   RowCount = 0
+		  CaptureInput = false          HideHud = None         SharedText = false
+
+		The root is full-screen and carries nothing visible itself; it is opened once per player and
+		stays open. The card inside has its own "show" and slides up from the bottom.
+
+		DIALOG VARIABLES
+		  vw_eyebrow vw_old vw_group vw_title vw_sub vw_p0..vw_p5 vw_left vw_until
+
+		CLASSES THE SERVER TOGGLES
+		  vw          show | g-vip g-premium g-supreme g-none | st-welcome st-new st-up st-gone | soon | perm
+		  vw_crest    pop-a pop-b                       (ping-pong to restart the pop)
+		  vw_p0..5    hidden
+		  vw_fill     p0 .. p20                         (5% a step, a clip)
+	-->
+	<Panel class="hud-screen" hittest="false">
+		<Panel id="VipHudRoot" class="vw-root" hittest="false">
+
+			<Panel id="vw" class="vw g-vip st-welcome" hittest="false">
+				<Panel id="vw_crest" class="vw-crest" hittest="false" />
+				<Panel class="vw-main" hittest="false">
+					<Panel class="vw-top" hittest="false">
+						<Label class="vw-eyebrow" text="{s:vw_eyebrow}" />
+						<Label class="vw-old" text="{s:vw_old}" />
+						<Label class="vw-chip" text="{s:vw_group}" />
+					</Panel>
+					<Label class="vw-title" text="{s:vw_title}" />
+					<Label class="vw-sub" text="{s:vw_sub}" />
+					<Panel class="vw-perks" hittest="false">
+						<Label id="vw_p0" class="vw-perk" text="{s:vw_p0}" />
+						<Label id="vw_p1" class="vw-perk" text="{s:vw_p1}" />
+						<Label id="vw_p2" class="vw-perk" text="{s:vw_p2}" />
+						<Label id="vw_p3" class="vw-perk" text="{s:vw_p3}" />
+						<Label id="vw_p4" class="vw-perk" text="{s:vw_p4}" />
+						<Label id="vw_p5" class="vw-perk" text="{s:vw_p5}" />
+					</Panel>
+					<Panel class="vw-time" hittest="false">
+						<Panel class="vw-track" hittest="false">
+							<Panel id="vw_fill" class="vw-fill p0" hittest="false" />
+						</Panel>
+						<Label class="vw-left" text="{s:vw_left}" />
+						<Label class="vw-until" text="{s:vw_until}" />
+					</Panel>
+				</Panel>
+			</Panel>
+
+		</Panel>
+	</Panel>
+</root>

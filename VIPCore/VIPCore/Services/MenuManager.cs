@@ -6,6 +6,7 @@ using CounterStrikeSharp.API.Modules.Commands;
 using CounterStrikeSharp.API.Modules.Menu;
 using Microsoft.Extensions.Logging;
 using VIPCore.Configs;
+using VIPCore.Hud;
 using VIPCore.Player;
 using VipCoreApi;
 using VipCoreApi.Args;
@@ -23,6 +24,7 @@ public class MenuManager
     private readonly FeatureManager _featureManager;
     private readonly CookieService _cookies;
     private readonly Config<VipConfig> _coreConfig;
+    private readonly VipHud _hud;
 
     private readonly ConcurrentDictionary<ulong, (CCSPlayerController Target, string Group)> _pendingCustomTime = new();
     private string[] _sortedItems = [];
@@ -33,7 +35,8 @@ public class MenuManager
         PlayersManager players,
         FeatureManager featureManager,
         CookieService cookies,
-        Config<VipConfig> coreConfig)
+        Config<VipConfig> coreConfig,
+        VipHud hud)
     {
         _plugin = plugin;
         _api = api;
@@ -41,6 +44,7 @@ public class MenuManager
         _featureManager = featureManager;
         _cookies = cookies;
         _coreConfig = coreConfig;
+        _hud = hud;
 
         LoadSortOrder();
 
@@ -55,11 +59,15 @@ public class MenuManager
     {
         // Next-il: not written when missing - a shared file on our servers, see Config.Load
         _sortedItems = File.Exists(SortMenuPath) ? File.ReadAllLines(SortMenuPath) : ["Health", "Armor"];
+        _hud.SortOrder = _sortedItems;
     }
 
     private void OpenVipMenu(CCSPlayerController? player)
     {
         if (player is null) return;
+
+        // Next-il: with the HUD on, VIPs get the mouse menu and everyone else the group comparison
+        if (_hud.OpenMenu(player)) return;
 
         if (!_api.IsPlayerVip(player) || !_players.TryGetPlayer(player, out var vipPlayer))
         {
