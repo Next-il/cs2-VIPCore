@@ -57,7 +57,8 @@ public class HudConfig
         new() { Key = "Fov", Label = "FOV up to", Short = "FOV {0}", Kind = "max" },
         new() { Key = "MusicKitLimit", Label = "Music kits", Short = "{0} MUSIC KITS", Kind = "number", Tile = true },
         new() { Key = "Skybox", Label = "Skybox", Short = "SKYBOX", Kind = "flag", Tile = true },
-        new() { Key = "ScoreboardTag", Label = "Tag", Short = "", Kind = "text" },
+        // The chat tag: vip.json ScoreboardTag is empty since 2026-11-22 (owner: no VIP clan tag, the scoreboard shows the rank).
+        new() { Key = "ChatTag", Label = "Chat tag", Short = "", Kind = "text" },
     ];
 
     /// <summary>

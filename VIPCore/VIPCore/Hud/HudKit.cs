@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using CounterStrikeSharp.API.Core;
 using PanoramaManager;
 using VIPCore.Configs;
@@ -52,7 +53,7 @@ internal sealed class ClassTracker
 /// <summary>A perk as one group has it: on or not, and its value as text.</summary>
 internal readonly record struct PerkValue(bool On, string Text);
 
-internal static class HudFormat
+internal static partial class HudFormat
 {
     public const int Steps = 20;
 
@@ -121,7 +122,9 @@ internal static class HudFormat
                     }, "");
                 case "text":
                 {
-                    var text = value.ValueKind == JsonValueKind.String ? value.GetString()?.Trim() : value.ToString();
+                    var text = value.ValueKind == JsonValueKind.String ? value.GetString() : value.ToString();
+                    // A chat tag carries {Color} codes; the HUD shows the words only
+                    text = text == null ? null : ColorCode().Replace(text, "").Trim();
                     return string.IsNullOrEmpty(text) ? new PerkValue(false, "") : new PerkValue(true, text);
                 }
                 default:
@@ -148,4 +151,7 @@ internal static class HudFormat
     };
 
     public static bool IsFlag(HudPerk perk) => perk.Kind.Equals("flag", StringComparison.OrdinalIgnoreCase);
+
+    [GeneratedRegex(@"\{[A-Za-z]+\}")]
+    private static partial Regex ColorCode();
 }
